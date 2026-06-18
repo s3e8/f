@@ -489,17 +489,20 @@ int forth_vm_run() {
         NEXT();
     }
 
+    OP(FETCH): {
+        cell* address = (cell*)forth_vm_pop_ds();
+        forth_vm_push_ds(address);        
+        NEXT();
+    }
+
     /* forth io ops */
-    OP(EMIT):
-    {
+    OP(EMIT): {
         printf("emitting...\n");
         forth_io_emit((int)forth_vm_pop_ds());
         NEXT();
-        // return;
     }
 
-    OP(TELL):
-    {
+    OP(TELL): {
         forth_io_tell((char*)forth_vm_pop_ds());
         NEXT();
     }
