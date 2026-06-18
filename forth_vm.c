@@ -466,6 +466,27 @@ int forth_vm_run() {
     OP(TICK): {
         char* next_word = forth_io_get_next_word();
         word_header_t* word = forth_dictionary_find_word(next_word);
+
+        cell code;
+        if(word != NULL) { /* todo: is this necessary? */
+            fprintf(stderr, "Error: word_header == NULL\n");
+            return 1;
+        } else {
+            if(word->flags & FLAG_BUILTIN) { /* todo: put into it's own global get_cfa function? */
+                code = (cell)(*forth_dictionary_get_cfa(word));
+            } else { /* ... so that after some level we dont care if it's builtin or not... */
+                code = (cell)forth_dictionary_get_cfa(word);
+            }
+        }
+
+        if(state == STATE_IMMEDIATE) forth_vm_push_ds(code);
+        else {
+            forth_dictionary_compile((cell)CODE(LIT));
+            forth_dictionary_compile(code);
+        }
+        
+        NEXT();
+
         // BYTECODE(TICK, "'", 0, 0, FLAG_HASARG|FLAG_IMMED, {
         // get_next_word(inputstate, wordbuf);
         // word_header_t *de = find_word(wordbuf);
