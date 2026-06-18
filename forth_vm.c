@@ -277,6 +277,7 @@ int forth_vm_run() {
         forth_dictionary_defcode("create",  CODE(CREATE),   FLAG_BUILTIN);
         forth_dictionary_defcode("word",    CODE(WORD),     FLAG_BUILTIN);
         forth_dictionary_defcode("find",    CODE(FIND),     FLAG_BUILTIN);
+        forth_dictionary_defcode("'",       CODE(TICK),     FLAG_BUILTIN | FLAG_IMMEDIATE);
         /* io */
         forth_dictionary_defcode("emit",    CODE(EMIT),     FLAG_BUILTIN);
         forth_dictionary_defcode("tell",    CODE(TELL),     FLAG_BUILTIN);
@@ -468,9 +469,9 @@ int forth_vm_run() {
         word_header_t* word = forth_dictionary_find_word(next_word);
 
         cell code;
-        if(word != NULL) { /* todo: is this necessary? */
-            fprintf(stderr, "Error: word_header == NULL\n");
-            return 1;
+        if(word == NULL) {
+            fprintf(stderr, "Error: no such word: %s\n", next_word);
+            NEXT();
         } else {
             if(word->flags & FLAG_BUILTIN) { /* todo: put into it's own global get_cfa function? */
                 code = (cell)(*forth_dictionary_get_cfa(word));
@@ -484,25 +485,8 @@ int forth_vm_run() {
             forth_dictionary_compile((cell)CODE(LIT));
             forth_dictionary_compile(code);
         }
-        
-        NEXT();
 
-        // BYTECODE(TICK, "'", 0, 0, FLAG_HASARG|FLAG_IMMED, {
-        // get_next_word(inputstate, wordbuf);
-        // word_header_t *de = find_word(wordbuf);
-        // cell token;
-        // if(de->flags & FLAG_BUILTIN) {
-        // token = (cell)(*(cfa(de)));
-        // } else {
-        // token = (cell)cfa(de);
-        // }
-        // if(state==STATE_IMMEDIATE) {
-        // PUSH(token);
-        // } else {
-        // comma((cell)&&l_LIT);
-        // comma(token);
-        // }    
-        // })
+        NEXT();
     }
 
     /* forth io ops */
