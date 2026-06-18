@@ -274,6 +274,7 @@ int forth_vm_run() {
         forth_dictionary_defcode("exit",    CODE(EXIT),     FLAG_BUILTIN);
         forth_dictionary_defcode("die",     CODE(DIE),      FLAG_BUILTIN);
         /* dictionary */
+        forth_dictionary_defcode("latest",  CODE(LATEST),   FLAG_BUILTIN);
         forth_dictionary_defcode("create",  CODE(CREATE),   FLAG_BUILTIN);
         forth_dictionary_defcode("word",    CODE(WORD),     FLAG_BUILTIN);
         forth_dictionary_defcode("find",    CODE(FIND),     FLAG_BUILTIN);
@@ -495,9 +496,13 @@ int forth_vm_run() {
         NEXT();
     }
 
+    OP(LATEST): {
+        forth_vm_push_ds(&latest);
+        NEXT();
+    }
+
     /* forth io ops */
     OP(EMIT): {
-        printf("emitting...\n");
         forth_io_emit((int)forth_vm_pop_ds());
         NEXT();
     }
