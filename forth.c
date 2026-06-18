@@ -48,6 +48,7 @@ int forth_interpreter_parse_number(const char* wordbuf, int* result) {
 }
 
 int forth_interpreter_interpret(void) {
+    /* todo: if !forth_initialized return 1 with err */
     char* wordbuf = forth_io_get_next_word();
     if(!wordbuf) return 1;
 
@@ -145,11 +146,15 @@ int main(void)
     forth_interpreter_init_defaults();
     // forth_test_run_all();
     // forth_interpreter_interpret();
+    /* todo: take error value from set_input_file */
+    /* todo: does set_input_file call set_input_stream? */
     forth_io_set_input_file("forth_bootstrap.f");
     int exit_status = forth_vm_run();
     if (exit_status) {
         fprintf(stderr, "Error: Forth VM exited with error");
         return 1;
+    } else {
+        printf("Forth - exiting gracefully...");
     }
 
     return 0;
