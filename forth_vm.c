@@ -240,8 +240,12 @@ void forth_vm_schedule_word(xt code) {
 /* execution engine -- todo: rename to run? */
 int forth_vm_run() {
 
-    register cell temp;
+    register cell temp; /* this is an actual thing in forth -- a register called temp. */
 
+    /* 
+        no cleaner way to do this if we want to name these as globals 
+        (necessary in order to remove the interpret into the interpreter)
+    */
     builtin_immediatebuf[0] = NULL;
     builtin_immediatebuf[1] = CODE(IRETURN);
     word_immediatebuf[0] = CODE(CALL);
@@ -261,19 +265,18 @@ int forth_vm_run() {
         forth_dictionary_defcode("call",    CODE(CALL),         FLAG_BUILTIN);
         forth_dictionary_defcode("lit",     CODE(LIT),          FLAG_BUILTIN);
         forth_dictionary_defcode("eow",     CODE(EOW),          FLAG_BUILTIN);
-
         /* interpreter */
         forth_dictionary_defcode("[", CODE(LEFT_BRACKET),   FLAG_BUILTIN | FLAG_IMMEDIATE   );
         forth_dictionary_defcode("]", CODE(RIGHT_BRACKET),  FLAG_BUILTIN | FLAG_IMMEDIATE   );
         forth_dictionary_defcode(":", CODE(COLON),          FLAG_BUILTIN                    );
         forth_dictionary_defcode(";", CODE(SEMICOLON),      FLAG_BUILTIN | FLAG_IMMEDIATE   );
-
         /* vm */
         forth_dictionary_defcode("exit",    CODE(EXIT),     FLAG_BUILTIN);
-
+        forth_dictionary_defcode("die",     CODE(DIE),      FLAG_BUILTIN);
         /* dictionary */
         forth_dictionary_defcode("create",  CODE(CREATE),   FLAG_BUILTIN);
-
+        forth_dictionary_defcode("word",    CODE(WORD),     FLAG_BUILTIN);
+        forth_dictionary_defcode("find",    CODE(FIND),     FLAG_BUILTIN);
         /* io */
         forth_dictionary_defcode("emit",    CODE(EMIT),     FLAG_BUILTIN);
         forth_dictionary_defcode("tell",    CODE(TELL),     FLAG_BUILTIN);
@@ -286,6 +289,7 @@ int forth_vm_run() {
         printf("initialized.\n");
         forth_initialized = 1;
     }
+
     void* quitcode[] = { 
         CODE(INTERPRET), 
         CODE(BRANCH), 
@@ -430,13 +434,54 @@ int forth_vm_run() {
         NEXT();
     }
 
-    // BYTECODE(DIE, "die", 0, 0, 0, { return; })
+    OP(DIE): { 
+        return 0; 
+    }
 
     /* forth dictionary ops */
     OP(CREATE): {
         char* next_word = forth_io_get_next_word();
         forth_dictionary_create_word(next_word, 0);
         NEXT();
+    }
+
+    OP(WORD): { /* todo: check ans definitions of word and create... */
+        char* next_word = forth_io_get_next_word();
+        forth_vm_push_ds((cell)next_word);
+        NEXT();
+    }
+
+    OP(FIND): {
+        char* word = (char*)forth_vm_pop_ds();
+        forth_dictionary_find_word(word);
+        NEXT();
+    }
+
+    OP(HIDDEN): {
+        word_header_t* word = (word_header_t*)forth_vm_pop_ds();
+        word->flags ^= FLAG_HIDDEN;
+        NEXT();
+    }
+
+    OP(TICK): {
+        char* next_word = forth_io_get_next_word();
+        word_header_t* word = forth_dictionary_find_word(next_word);
+        // BYTECODE(TICK, "'", 0, 0, FLAG_HASARG|FLAG_IMMED, {
+        // get_next_word(inputstate, wordbuf);
+        // word_header_t *de = find_word(wordbuf);
+        // cell token;
+        // if(de->flags & FLAG_BUILTIN) {
+        // token = (cell)(*(cfa(de)));
+        // } else {
+        // token = (cell)cfa(de);
+        // }
+        // if(state==STATE_IMMEDIATE) {
+        // PUSH(token);
+        // } else {
+        // comma((cell)&&l_LIT);
+        // comma(token);
+        // }    
+        // })
     }
 
     /* forth io ops */
