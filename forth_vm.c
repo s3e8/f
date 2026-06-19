@@ -266,19 +266,23 @@ int forth_vm_run() {
         forth_dictionary_defcode("lit",     CODE(LIT),          FLAG_BUILTIN);
         forth_dictionary_defcode("eow",     CODE(EOW),          FLAG_BUILTIN);
         /* interpreter */
-        forth_dictionary_defcode("[", CODE(LEFT_BRACKET),   FLAG_BUILTIN | FLAG_IMMEDIATE   );
-        forth_dictionary_defcode("]", CODE(RIGHT_BRACKET),  FLAG_BUILTIN | FLAG_IMMEDIATE   );
-        forth_dictionary_defcode(":", CODE(COLON),          FLAG_BUILTIN                    );
-        forth_dictionary_defcode(";", CODE(SEMICOLON),      FLAG_BUILTIN | FLAG_IMMEDIATE   );
+        forth_dictionary_defcode("[", CODE(LEFT_BRACKET),   FLAG_BUILTIN | FLAG_IMMEDIATE );
+        forth_dictionary_defcode("]", CODE(RIGHT_BRACKET),  FLAG_BUILTIN | FLAG_IMMEDIATE );
+        forth_dictionary_defcode(":", CODE(COLON),          FLAG_BUILTIN                  );
+        forth_dictionary_defcode(";", CODE(SEMICOLON),      FLAG_BUILTIN | FLAG_IMMEDIATE );
         /* vm */
         forth_dictionary_defcode("exit",    CODE(EXIT),     FLAG_BUILTIN);
         forth_dictionary_defcode("die",     CODE(DIE),      FLAG_BUILTIN);
+        forth_dictionary_defcode("0branch", CODE(0BRANCH),  FLAG_BUILTIN | FLAG_HASARG);
+        forth_dictionary_defcode("1branch", CODE(1BRANCH),  FLAG_BUILTIN | FLAG_HASARG);
         /* dictionary */
-        forth_dictionary_defcode("latest",  CODE(LATEST),   FLAG_BUILTIN);
-        forth_dictionary_defcode("create",  CODE(CREATE),   FLAG_BUILTIN);
-        forth_dictionary_defcode("word",    CODE(WORD),     FLAG_BUILTIN);
-        forth_dictionary_defcode("find",    CODE(FIND),     FLAG_BUILTIN);
-        forth_dictionary_defcode("'",       CODE(TICK),     FLAG_BUILTIN | FLAG_IMMEDIATE);
+        forth_dictionary_defconst("here",   (cell)&dictionary_pointer);
+        forth_dictionary_defcode("latest",  CODE(LATEST),       FLAG_BUILTIN);
+        forth_dictionary_defcode("create",  CODE(CREATE),       FLAG_BUILTIN);
+        forth_dictionary_defcode("word",    CODE(WORD),         FLAG_BUILTIN);
+        forth_dictionary_defcode("find",    CODE(FIND),         FLAG_BUILTIN);
+        forth_dictionary_defcode("'",       CODE(TICK),         FLAG_BUILTIN | FLAG_IMMEDIATE);
+        forth_dictionary_defcode("immediate", CODE(IMMEDIATE),  FLAG_BUILTIN | FLAG_IMMEDIATE);
         /* io */
         forth_dictionary_defcode("emit",    CODE(EMIT),     FLAG_BUILTIN);
         forth_dictionary_defcode("tell",    CODE(TELL),     FLAG_BUILTIN);
@@ -307,6 +311,10 @@ int forth_vm_run() {
     return 1;
 
     /* labels */
+    OP(BYE): {
+        goto OP(DIE);
+    }
+
     /* forth core ops */
     OP(INTERPRET): {
         char* wordbuf = forth_io_get_next_word();
@@ -440,6 +448,18 @@ int forth_vm_run() {
         return 0; 
     }
 
+    OP(0BRANCH): { /* todo: FLAG_HASARG */
+        temp = RS_INTARG();
+        if(!forth_vm_pop_ds()) current_ip += (temp / sizeof(void*)) - 1;
+        NEXT();
+    }
+
+    OP(1BRANCH): { /* todo: FLAG_HASARG */
+        temp = RS_INTARG();
+        if(forth_vm_pop_ds()) current_ip += (temp / sizeof(void*)) - 1;
+        NEXT();
+    }
+
     /* forth dictionary ops */
     OP(CREATE): {
         char* next_word = forth_io_get_next_word();
@@ -490,14 +510,19 @@ int forth_vm_run() {
         NEXT();
     }
 
-    OP(FETCH): {
+    OP(FETCH): { /* todo: a little confused about the pointer semantics here */
         cell* address = (cell*)forth_vm_pop_ds();
-        forth_vm_push_ds(address);        
+        forth_vm_push_ds(*address);        
         NEXT();
     }
 
     OP(LATEST): {
-        forth_vm_push_ds(&latest);
+        forth_vm_push_ds((cell)&latest);
+        NEXT();
+    }
+
+    OP(IMMEDIATE): {
+        latest->flags ^= FLAG_IMMEDIATE;
         NEXT();
     }
 

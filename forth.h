@@ -31,9 +31,12 @@ typedef struct      word_header {
 } word_header_t;
 
 extern word_header_t* latest;
+extern void* dictionary_pointer; /* todo: dp? */
+extern void* dictionary_base;
+extern cell  dictionary_size;
+
 extern int state;
 extern int base;
-
 extern void* builtin_immediatebuf[2];
 extern void* word_immediatebuf[3];
 extern xt call_code;
@@ -54,6 +57,7 @@ extern void             forth_dictionary_compile(cell value);
 extern xt               forth_dictionary_get_cfa(word_header_t* word);
 extern xt               forth_dictionary_get_cfa_by_name(const char* name);
 extern void             forth_dictionary_defcode(const char* name, void* code, cell flags);
+extern void             forth_dictionary_defconst(const char* name, cell value);
 /* end forth dictionary */
 
 /* forth io */

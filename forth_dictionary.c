@@ -1,9 +1,9 @@
 
 #include "forth.h"
 
-static void* dictionary_pointer; /* todo: dp? */
-static void* dictionary_base;
-static cell  dictionary_size;
+void* dictionary_pointer; /* todo: dp? */
+void* dictionary_base;
+cell  dictionary_size;
 
 word_header_t* latest = NULL;
 
@@ -85,7 +85,7 @@ void defword(const char* name, xt code, int codesize, cell flags) {
     forth_dictionary_compile((cell)getcode("eow"));
 }
 
-void defconst(const char* name, cell value) {
+void forth_dictionary_defconst(const char* name, cell value) {
     void* code[] = { getcode("lit"), (void*)value, getcode("exit") };
     defword(name, code, 3, FLAG_INLINE);
 }

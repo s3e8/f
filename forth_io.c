@@ -6,8 +6,8 @@
     -- flush stdin stdio...?
 */
 
-#define DEFAULT_WORDBUF_SIZE        128
-#define DEFAULT_LINEBUF_SIZE        1024
+#define DEFAULT_WORDBUF_SIZE        256
+#define DEFAULT_LINEBUF_SIZE        2048
 
 static char default_linebuf[DEFAULT_LINEBUF_SIZE]; /* todo: should these be on stack or on heap? */
 static char default_wordbuf[DEFAULT_WORDBUF_SIZE];
