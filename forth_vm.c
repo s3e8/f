@@ -259,6 +259,7 @@ int forth_vm_run() {
     if(!forth_initialized) {
         printf("initializing forth...\n");
         /* defcodes */
+        forth_dictionary_defcode("bye", FLAG_BUILTIN);
         /* core -- outer interpreter */
         forth_dictionary_defcode("ireturn", CODE(IRETURN),      FLAG_BUILTIN);
         forth_dictionary_defcode("branch",  CODE(BRANCH),       FLAG_BUILTIN);
@@ -271,16 +272,17 @@ int forth_vm_run() {
         forth_dictionary_defcode(":", CODE(COLON),          FLAG_BUILTIN                  );
         forth_dictionary_defcode(";", CODE(SEMICOLON),      FLAG_BUILTIN | FLAG_IMMEDIATE );
         /* vm */
-        forth_dictionary_defcode("exit",    CODE(EXIT),     FLAG_BUILTIN);
-        forth_dictionary_defcode("die",     CODE(DIE),      FLAG_BUILTIN);
-        forth_dictionary_defcode("0branch", CODE(0BRANCH),  FLAG_BUILTIN | FLAG_HASARG);
-        forth_dictionary_defcode("1branch", CODE(1BRANCH),  FLAG_BUILTIN | FLAG_HASARG);
+        forth_dictionary_defcode("exit",    CODE(EXIT),     FLAG_BUILTIN                );
+        forth_dictionary_defcode("die",     CODE(DIE),      FLAG_BUILTIN                );
+        forth_dictionary_defcode("0branch", CODE(0BRANCH),  FLAG_BUILTIN | FLAG_HASARG  );
+        forth_dictionary_defcode("1branch", CODE(1BRANCH),  FLAG_BUILTIN | FLAG_HASARG  );
+        forth_dictionary_defcode("jump",    CODE(JUMP),     FLAG_BUILTIN | FLAG_HASARG  );
         /* dictionary */
         forth_dictionary_defconst("here",   (cell)&dictionary_pointer);
-        forth_dictionary_defcode("latest",  CODE(LATEST),       FLAG_BUILTIN);
-        forth_dictionary_defcode("create",  CODE(CREATE),       FLAG_BUILTIN);
-        forth_dictionary_defcode("word",    CODE(WORD),         FLAG_BUILTIN);
-        forth_dictionary_defcode("find",    CODE(FIND),         FLAG_BUILTIN);
+        forth_dictionary_defcode("latest",  CODE(LATEST),       FLAG_BUILTIN                 );
+        forth_dictionary_defcode("create",  CODE(CREATE),       FLAG_BUILTIN                 );
+        forth_dictionary_defcode("word",    CODE(WORD),         FLAG_BUILTIN                 );
+        forth_dictionary_defcode("find",    CODE(FIND),         FLAG_BUILTIN                 );
         forth_dictionary_defcode("'",       CODE(TICK),         FLAG_BUILTIN | FLAG_IMMEDIATE);
         forth_dictionary_defcode("immediate", CODE(IMMEDIATE),  FLAG_BUILTIN | FLAG_IMMEDIATE);
         /* io */
@@ -329,7 +331,8 @@ int forth_vm_run() {
                     printf("compiling builtin...\n");
                     forth_dictionary_compile((cell)*code);
                 }
-                else {
+                else { /* todo: use getcode here? so we can move the function into the interpreter module 
+                    and interpret outside of the outer interpreter loop */
                     forth_dictionary_compile((cell)CODE(CALL));
                     forth_dictionary_compile((cell)code);
                 }
@@ -457,6 +460,12 @@ int forth_vm_run() {
     OP(1BRANCH): { /* todo: FLAG_HASARG */
         temp = RS_INTARG();
         if(forth_vm_pop_ds()) current_ip += (temp / sizeof(void*)) - 1;
+        NEXT();
+    }
+
+    OP(JUMP): {
+        void* fn = RS_ARG();
+        current_ip = fn;
         NEXT();
     }
 
